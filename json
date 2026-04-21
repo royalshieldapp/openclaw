@@ -12,7 +12,7 @@ def root():
 @app.get("/ai")
 def ai(msg: str):
     response = client.chat.completions.create(
-        model="gptGPT-5.4:",
+        model="gptGPT-4o:",
         messages=[
             {"role": "system", "content": "You are a cybersecurity AI assistant."},
             {"role": "user", "content": msg}
