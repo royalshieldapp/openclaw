@@ -3,7 +3,6 @@ import os
 from openai import OpenAI
 
 app = FastAPI()
-
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @app.get("/")
@@ -11,12 +10,12 @@ def root():
     return {"status": "ok", "message": "Royal Shield backend active 🔐"}
 
 @app.get("/ai")
-def ai():
+def ai(msg: str):
     response = client.chat.completions.create(
-        model="gpt-4.1-mini",
+        model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": "You are a cybersecurity AI assistant."},
-            {"role": "user", "content": "Scan for threats"}
+            {"role": "user", "content": msg}
         ]
     )
     return {"response": response.choices[0].message.content}
