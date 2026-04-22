@@ -3,6 +3,7 @@ import os
 from openai import OpenAI
 
 app = FastAPI()
+
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @app.get("/")
@@ -11,11 +12,9 @@ def root():
 
 @app.get("/ai")
 def ai(msg: str):
-    response = client.chat.completions.create(
-        model="gptGPT-4o:",
-        messages=[
-            {"role": "system", "content": "You are a cybersecurity AI assistant."},
-            {"role": "user", "content": msg}
-        ]
+    response = client.responses.create(
+        model="gpt-4o",
+        instructions="You are a cybersecurity AI assistant.",
+        input=msg
     )
-    return {"response": response.choices[0].message.content}
+    return {"response": response.output_text}
