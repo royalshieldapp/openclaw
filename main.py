@@ -1,3 +1,13 @@
+from fastapi import FastAPI
+from openai import OpenAI
+
+app = FastAPI()
+client = OpenAI()
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
 @app.get("/ai")
 def ai(msg: str):
     response = client.chat.completions.create(
