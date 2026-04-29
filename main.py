@@ -1,12 +1,26 @@
 from fastapi import FastAPI
 from openai import OpenAI
 
-app = FastAPI()
+app = FastAPI(
+    title="Royal Shield API",
+    version="1.0.0"
+)
 client = OpenAI()
+
+@app.get("/")
+def root():
+    return {
+        "status": "ok",
+        "app": "Royal Shield",
+        "message": "Royal Shield backend active 🔐"
+    }
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {
+        "status": "healthy",
+        "service": "railway"
+    }
 
 @app.get("/ai")
 def ai(msg: str):
