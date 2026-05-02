@@ -4,6 +4,7 @@ import os
 
 from fastapi import FastAPI, HTTPException, Query
 from openai import OpenAI
+from openai import OpenAIError
 
 app = FastAPI(title="OpenClaw API")
 
@@ -28,9 +29,17 @@ def ai(msg: str = Query(..., min_length=1)) -> dict[str, str]:
         )
 
     client = OpenAI(api_key=api_key)
-    response = client.responses.create(
-        model="gpt-4o-mini",
-        instructions="You are a cybersecurity AI assistant.",
-        input=msg,
-    )
-    return {"response": response.output_text}
+    try:
+        response = client.responses.create(
+            model="gpt-4o-mini",
+            instructions="You are a cybersecurity AI assistant.",
+            input=msg,
+        )
+    except OpenAIError as exc:
+        raise HTTPException(status_code=502, detail=f"OpenAI request failed: {exc}") from exc
+
+    output_text = response.output_text
+    if not output_text:
+        raise HTTPException(status_code=502, detail="OpenAI returned an empty response")
+
+    return {"response": output_text}
