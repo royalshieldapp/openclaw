@@ -6,6 +6,11 @@ from openai import APIStatusError, OpenAI
 app = FastAPI(title="Royal Shield API", version="1.0.0")
 
 DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+MODEL_CANDIDATES = [
+    model.strip()
+    for model in os.getenv("OPENAI_MODELS", DEFAULT_MODEL).split(",")
+    if model.strip()
+]
 
 
 def get_openai_client() -> OpenAI:
@@ -34,22 +39,39 @@ def health():
 
 @app.get("/ai")
 def ai(msg: str):
-    try:
-        response = get_openai_client().chat.completions.create(
-            model=DEFAULT_MODEL,
-            messages=[
-                {"role": "system", "content": "You are a cybersecurity AI assistant."},
-                {"role": "user", "content": msg},
-            ],
-        )
-    except HTTPException:
-        raise
-    except APIStatusError as exc:
-        # Convert provider errors to controlled HTTP responses.
-        detail = f"OpenAI API error ({exc.status_code}): {exc.response.text}"
-        raise HTTPException(status_code=exc.status_code or 502, detail=detail) from exc
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"OpenAI request failed: {exc}") from exc
+    client = get_openai_client()
+    last_error = None
 
-    content = response.choices[0].message.content
-    return {"response": content, "model": DEFAULT_MODEL}
+    for model in MODEL_CANDIDATES:
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": "You are a cybersecurity AI assistant."},
+                    {"role": "user", "content": msg},
+                ],
+            )
+            content = response.choices[0].message.content
+            return {"response": content}
+        except APIStatusError as exc:
+            last_error = exc
+            # Try next model if this one is not available for the project.
+            if exc.status_code == 403 and "model" in str(exc).lower():
+                continue
+            if exc.status_code == 401:
+                raise HTTPException(
+                    status_code=502,
+                    detail="OpenAI authentication failed. Verify OPENAI_API_KEY.",
+                ) from exc
+            raise HTTPException(status_code=502, detail="OpenAI API request failed.") from exc
+        except Exception as exc:
+            raise HTTPException(status_code=502, detail=f"OpenAI request failed: {exc}") from exc
+
+    attempted = ", ".join(MODEL_CANDIDATES)
+    raise HTTPException(
+        status_code=502,
+        detail=(
+            "No configured model is accessible for this project. "
+            f"Tried: {attempted}. Set OPENAI_MODELS/OPENAI_MODEL to allowed models."
+        ),
+    ) from last_error
