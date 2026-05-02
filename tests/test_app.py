@@ -17,3 +17,12 @@ def test_health_endpoint() -> None:
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+def test_ai_requires_api_key(monkeypatch) -> None:
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    response = client.get("/ai", params={"msg": "hola"})
+
+    assert response.status_code == 500
+    assert response.json()["detail"] == "Missing OPENAI_API_KEY environment variable"
