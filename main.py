@@ -8,6 +8,24 @@ from openai import OpenAIError
 
 app = FastAPI(title="OpenClaw API")
 
+# Load AI configuration from environment variables
+def get_model_config():
+    """Get AI model configuration from environment variables."""
+    enable_premium = os.getenv("ENABLE_PREMIUM_MODEL", "false").lower() == "true"
+    
+    if enable_premium:
+        return os.getenv("AI_PREMIUM_MODEL", "gpt-4-turbo")
+    else:
+        return os.getenv("AI_MODEL", "gpt-4o-mini")
+
+def get_max_tokens():
+    """Get max output tokens from environment variable."""
+    return int(os.getenv("MAX_OUTPUT_TOKENS", "2048"))
+
+def get_temperature():
+    """Get temperature parameter from environment variable."""
+    return float(os.getenv("TEMPERATURE", "0.7"))
+
 
 @app.get("/")
 def root() -> dict[str, str]:
@@ -29,11 +47,17 @@ def ai(msg: str = Query(..., min_length=1)) -> dict[str, str]:
         )
 
     client = OpenAI(api_key=api_key)
+    model = get_model_config()
+    max_tokens = get_max_tokens()
+    temperature = get_temperature()
+    
     try:
         response = client.responses.create(
-            model="gpt-4o-mini",
+            model=model,
             instructions="You are a cybersecurity AI assistant.",
             input=msg,
+            max_tokens=max_tokens,
+            temperature=temperature,
         )
     except OpenAIError as exc:
         raise HTTPException(status_code=502, detail=f"OpenAI request failed: {exc}") from exc
