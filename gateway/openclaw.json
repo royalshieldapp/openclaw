@@ -1,0 +1,48 @@
+{
+  "gateway": {
+    "mode": "local",
+    "bind": "lan",
+    "auth": {
+      "mode": "token",
+      "token": "${OPENCLAW_GATEWAY_TOKEN}"
+    },
+    "controlUi": {
+      "allowedOrigins": [
+        "https://${RAILWAY_PUBLIC_DOMAIN}"
+      ]
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "nvidia/meta/llama-3.1-8b-instruct"
+      },
+      "workspace": "${OPENCLAW_WORKSPACE_DIR}"
+    }
+  },
+  "channels": {
+    "whatsapp": {
+      "dmPolicy": "pairing",
+      "groupPolicy": "disabled"
+    }
+  },
+  "plugins": {
+    "load": {
+      "paths": [
+        "/usr/local/lib/node_modules/@openclaw/whatsapp"
+      ]
+    },
+    "entries": {
+      "whatsapp": {
+        "enabled": true
+      }
+    }
+  },
+  "tools": {
+    "media": {
+      "audio": {
+        "enabled": false
+      }
+    }
+  }
+}

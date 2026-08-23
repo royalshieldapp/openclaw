@@ -39,6 +39,22 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
+## Gateway separado de WhatsApp
+
+El directorio `gateway/` contiene un Gateway oficial de OpenClaw separado para
+vincular WhatsApp Web mediante QR. En Railway debe desplegarse como otro
+servicio, con `/gateway` como directorio raíz y un volumen persistente montado
+en `/data`.
+
+Variables requeridas en ese servicio:
+
+- `NVIDIA_API_KEY`
+- `OPENCLAW_GATEWAY_TOKEN`
+
+El canal usa emparejamiento para mensajes directos, bloquea grupos y no guarda
+números ni secretos en el repositorio. El audio entrante permanece desactivado
+hasta integrar y verificar un adaptador de voz compatible con NVIDIA.
+
 ## Modelos disponibles
 - **meta/llama-3.1-8b-instruct** - Default
 - **meta/llama-3.3-70b-instruct** - Solo si `ENABLE_PREMIUM_MODEL=true`
