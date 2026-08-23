@@ -19,7 +19,6 @@ RUN chmod 0555 /app/start.sh \
 ENV OPENCLAW_STATE_DIR=/data/openclaw \
     OPENCLAW_CONFIG_PATH=/data/openclaw/openclaw.json \
     OPENCLAW_WORKSPACE_DIR=/data/openclaw/workspace \
-    OPENCLAW_GATEWAY_PORT=18789 \
     OPENCLAW_DISABLE_BONJOUR=1 \
     NODE_ENV=production
 

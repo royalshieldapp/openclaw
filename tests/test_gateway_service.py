@@ -26,10 +26,13 @@ def test_gateway_config_is_secure_and_uses_nvidia():
 
 def test_gateway_startup_requires_secrets_and_persistent_state():
     startup = (GATEWAY / "start.sh").read_text(encoding="utf-8")
+    dockerfile = (GATEWAY / "Dockerfile").read_text(encoding="utf-8")
 
     assert 'require_env "NVIDIA_API_KEY"' in startup
     assert 'require_env "OPENCLAW_GATEWAY_TOKEN"' in startup
     assert "OPENCLAW_STATE_DIR:=/data/openclaw" in startup
+    assert 'OPENCLAW_GATEWAY_PORT="${PORT:-${OPENCLAW_GATEWAY_PORT:-18789}}"' in startup
+    assert "OPENCLAW_GATEWAY_PORT=18789" not in dockerfile
     assert "exec openclaw gateway" in startup
 
 
