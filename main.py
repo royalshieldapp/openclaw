@@ -21,12 +21,12 @@ def get_model_config():
     if enable_premium:
         return os.getenv(
             "AI_PREMIUM_MODEL",
-            "meta/llama-3.3-70b-instruct",
+            "qwen/qwen3.8-max",
         )
 
     return os.getenv(
         "AI_MODEL",
-        "meta/llama-3.1-8b-instruct",
+        "qwen/qwen3.8-27b",
     )
 
 
@@ -44,7 +44,7 @@ def get_temperature():
 def root() -> dict[str, str]:
     return {
         "status": "ok",
-        "message": "Royal Shield NVIDIA AI backend active",
+        "message": "Royal Shield NVIDIA AI backend active with Qwen 3.8",
     }
 
 
@@ -107,3 +107,4 @@ def ai(msg: str = Query(..., min_length=1)) -> dict[str, str]:
         "response": output_text,
         "model": model,
     }
+
