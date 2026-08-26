@@ -10,6 +10,7 @@ require_env() {
     fi
 }
 
+require_env "QWEN_API_KEY"
 require_env "NVIDIA_API_KEY"
 require_env "OPENCLAW_GATEWAY_TOKEN"
 
@@ -25,8 +26,9 @@ export OPENCLAW_GATEWAY_PORT
 
 mkdir -p "$OPENCLAW_STATE_DIR" "$OPENCLAW_WORKSPACE_DIR"
 
-if [ ! -f "$OPENCLAW_CONFIG_PATH" ]; then
-    cp /app/openclaw.json "$OPENCLAW_CONFIG_PATH"
-fi
+# Keep the versioned gateway configuration authoritative on each deploy while
+# preserving workspace/channel session state under OPENCLAW_STATE_DIR.
+cp /app/openclaw.json "$OPENCLAW_CONFIG_PATH"
+chmod 0600 "$OPENCLAW_CONFIG_PATH"
 
 exec openclaw gateway --bind lan --port "$OPENCLAW_GATEWAY_PORT"
