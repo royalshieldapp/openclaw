@@ -1,77 +1,97 @@
 # openclaw
 
-Backend en **FastAPI** para Royal Shield y un Gateway oficial de OpenClaw separado, listo para desplegar en Railway.
+Backend en **FastAPI** para Royal Shield y un servicio separado de **OpenClaw Gateway** para Railway.
 
-## Backend FastAPI (raiz)
+## FastAPI API
 
 ### Endpoints
 - `GET /` estado general.
-- `GET /health` healthcheck para Railway.
+- `GET /health` healthcheck.
 - `GET /ai?msg=...` consulta al modelo configurado en NVIDIA API Catalog.
 
-### Variables de entorno del backend
-
-#### Requeridas
+### Variables
 - `NVIDIA_API_KEY` (obligatoria para `/ai`).
-
-#### Configuracion de modelos IA
-- `AI_MODEL` (default: `meta/llama-3.1-8b-instruct`) - Modelo estandar para consultas normales.
-- `AI_PREMIUM_MODEL` (default: `meta/llama-3.3-70b-instruct`) - Modelo premium (solo si `ENABLE_PREMIUM_MODEL=true`).
+- `AI_MODEL` (default: `meta/llama-3.1-8b-instruct`).
+- `AI_PREMIUM_MODEL` (default: `meta/llama-3.3-70b-instruct`).
 - `ENABLE_PREMIUM_MODEL` (default: `false`).
 - `MAX_OUTPUT_TOKENS` (default: `2048`).
 - `TEMPERATURE` (default: `0.7`).
+- `PORT` (Railway la puede definir; fallback `8080`).
 
-#### Opcionales
-- `PORT` (la define Railway automaticamente, default: `8080`).
+## OpenClaw Gateway + WhatsApp
 
-### Deploy del backend en Railway
-1. Conecta este repo en Railway.
-2. En **Variables**, agrega `NVIDIA_API_KEY` y las variables de modelo que quieras sobrescribir.
-3. Railway detectara `railway.toml` y ejecutara `uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}`.
-4. El healthcheck usa `GET /health`.
+El directorio `gateway/` se despliega como un **segundo servicio** en Railway, usando `/gateway` como Root Directory y un volumen persistente montado en `/data`.
 
-## Gateway OpenClaw + WhatsApp
+### Modelos IA
 
-El directorio `gateway/` contiene un Gateway oficial de OpenClaw separado para vincular WhatsApp Web mediante QR. En Railway debe desplegarse como otro servicio con `/gateway` como directorio raiz y un volumen persistente montado en `/data`.
+El gateway usa Alibaba Cloud Model Studio mediante su API compatible con OpenAI y conserva NVIDIA como proveedor de respaldo:
 
-### Arquitectura de modelos
+- Primario: `qwen38/qwen3.8-27b`.
+- Fallback: `nvidia/meta/llama-3.1-8b-instruct`.
 
-- **Primary:** `qwen38/qwen3.8-27b`
-- **Provider:** Alibaba Cloud Model Studio, usando su API OpenAI-compatible.
-- **Fallback:** `nvidia/meta/llama-3.1-8b-instruct`
+### Railway
 
-La configuracion del repo se copia al `OPENCLAW_CONFIG_PATH` en cada arranque para evitar que un archivo persistente antiguo mantenga un modelo primario obsoleto. El workspace y las sesiones persistentes permanecen bajo `OPENCLAW_STATE_DIR`.
+Configura el servicio `gateway` así:
 
-### Variables requeridas en el servicio `/gateway`
+1. **Root Directory:** `/gateway`
+2. **Volume:** montar en `/data`
+3. **Public Networking:** HTTP Proxy al puerto `8080`
+4. **Variables secretas:**
+   - `QWEN_API_KEY`
+   - `NVIDIA_API_KEY`
+   - `OPENCLAW_GATEWAY_TOKEN`
+5. Railway debe exponer `RAILWAY_PUBLIC_DOMAIN` después de habilitar un dominio público.
+6. Variables recomendadas:
+   - `OPENCLAW_GATEWAY_PORT=8080`
+   - `OPENCLAW_STATE_DIR=/data/openclaw`
+   - `OPENCLAW_CONFIG_PATH=/data/openclaw/openclaw.json`
+   - `OPENCLAW_WORKSPACE_DIR=/data/openclaw/workspace`
+   - `OPENCLAW_SYNC_CONFIG=true`
 
-- `QWEN_API_KEY` - API key de Alibaba Cloud Model Studio para Qwen.
-- `NVIDIA_API_KEY` - API key existente de NVIDIA para el fallback.
-- `OPENCLAW_GATEWAY_TOKEN` - token de autenticacion del Gateway.
+`OPENCLAW_SYNC_CONFIG=true` hace que la configuración versionada en el repo sea la fuente de verdad en cada reinicio. Antes de reemplazar una configuración persistida, `start.sh` guarda una copia como `openclaw.json.previous`. Si quieres conservar cambios hechos manualmente desde la UI entre redeploys, cambia esta variable a `false`.
 
-### Variables de estado
+### Control UI
 
-- `OPENCLAW_STATE_DIR=/data/openclaw`
-- `OPENCLAW_CONFIG_PATH=/data/openclaw/openclaw.json`
-- `OPENCLAW_WORKSPACE_DIR=/data/openclaw/workspace`
+Cuando el dominio esté activo, abre:
 
-Railway suministra `PORT` automaticamente. El Gateway usa `/healthz` como healthcheck.
+`https://<RAILWAY_PUBLIC_DOMAIN>/`
 
-### Seguridad del canal
+La UI usa autenticación por token y limita el origen del navegador al dominio público de Railway. No uses `allowedOrigins=["*"]` en producción.
 
-- Los mensajes directos usan emparejamiento.
-- Los grupos permanecen desactivados.
-- No se guardan API keys ni tokens en el repositorio.
-- El audio entrante permanece desactivado hasta integrar y verificar un adaptador compatible.
+### WhatsApp
 
-## Desarrollo local del backend FastAPI
+WhatsApp usa el plugin oficial y queda con:
+
+- DMs desconocidos: `pairing`.
+- Grupos: `disabled`.
+- Audio entrante: desactivado por ahora.
+
+Para vincular la cuenta, abre una Shell del servicio en Railway y ejecuta:
+
+```bash
+openclaw channels login --channel whatsapp
+```
+
+Escanea el QR desde **WhatsApp > Settings > Linked Devices > Link a Device**.
+
+### Verificación
+
+Desde Railway Shell:
+
+```bash
+openclaw doctor --json
+openclaw gateway health --port "${PORT:-8080}"
+```
+
+El healthcheck del servicio usa `GET /healthz`.
+
+## Desarrollo local de FastAPI
 
 ```bash
 pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
-## Tests
+## Seguridad
 
-```bash
-python -m pytest
-```
+No guardes en GitHub `QWEN_API_KEY`, `NVIDIA_API_KEY`, `OPENCLAW_GATEWAY_TOKEN`, credenciales de WhatsApp ni números permitidos. Los secretos deben vivir únicamente en Railway Variables y las credenciales/estado persistente en el volumen `/data`.
