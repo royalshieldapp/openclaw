@@ -13,6 +13,7 @@ require_env() {
 require_env "NVIDIA_API_KEY"
 require_env "OPENCLAW_GATEWAY_TOKEN"
 require_env "RAILWAY_PUBLIC_DOMAIN"
+require_env "TELEGRAM_BOT_TOKEN"
 
 : "${OPENCLAW_STATE_DIR:=/data/openclaw}"
 : "${OPENCLAW_CONFIG_PATH:=${OPENCLAW_STATE_DIR}/openclaw.json}"

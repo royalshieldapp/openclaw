@@ -24,6 +24,11 @@
     }
   },
   "channels": {
+    "telegram": {
+      "enabled": true,
+      "dmPolicy": "pairing",
+      "groupPolicy": "disabled"
+    },
     "whatsapp": {
       "dmPolicy": "pairing",
       "groupPolicy": "disabled"
