@@ -10,6 +10,7 @@ require_env() {
     fi
 }
 
+require_env "QWEN_API_KEY"
 require_env "NVIDIA_API_KEY"
 require_env "OPENCLAW_GATEWAY_TOKEN"
 require_env "RAILWAY_PUBLIC_DOMAIN"
@@ -32,6 +33,7 @@ if [ ! -f "$OPENCLAW_CONFIG_PATH" ] || [ "$OPENCLAW_SYNC_CONFIG" = "true" ]; the
         cp "$OPENCLAW_CONFIG_PATH" "${OPENCLAW_CONFIG_PATH}.previous"
     fi
     cp /app/openclaw.json "$OPENCLAW_CONFIG_PATH"
+    chmod 0600 "$OPENCLAW_CONFIG_PATH"
 fi
 
 exec openclaw gateway --bind lan --port "$OPENCLAW_GATEWAY_PORT"

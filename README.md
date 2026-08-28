@@ -22,14 +22,12 @@ Backend en **FastAPI** para Royal Shield y un servicio separado de **OpenClaw Ga
 
 El directorio `gateway/` se despliega como un **segundo servicio** en Railway, usando `/gateway` como Root Directory y un volumen persistente montado en `/data`.
 
-### Modelo NVIDIA
+### Modelos IA
 
-El gateway queda configurado con modelos actualmente soportados por OpenClaw/NVIDIA:
+El gateway usa Alibaba Cloud Model Studio mediante su API compatible con OpenAI y conserva NVIDIA como proveedor de respaldo:
 
-- Primario: `nvidia/nvidia/nemotron-3-super-120b-a12b`.
-- Fallback: `nvidia/nvidia/nemotron-3-ultra-550b-a55b`.
-
-Qwen3.5 se dejó fuera del runtime de producción porque NVIDIA retiró su endpoint hospedado para OpenClaw. Si vuelve a publicarse un endpoint compatible, se puede reactivar sin cambiar la arquitectura del gateway.
+- Primario: `qwen38/qwen3.8-27b`.
+- Fallback: `nvidia/meta/llama-3.1-8b-instruct`.
 
 ### Railway
 
@@ -39,6 +37,7 @@ Configura el servicio `gateway` así:
 2. **Volume:** montar en `/data`
 3. **Public Networking:** HTTP Proxy al puerto `8080`
 4. **Variables secretas:**
+   - `QWEN_API_KEY`
    - `NVIDIA_API_KEY`
    - `OPENCLAW_GATEWAY_TOKEN`
 5. Railway debe exponer `RAILWAY_PUBLIC_DOMAIN` después de habilitar un dominio público.
@@ -95,4 +94,4 @@ uvicorn main:app --reload
 
 ## Seguridad
 
-No guardes en GitHub `NVIDIA_API_KEY`, `OPENCLAW_GATEWAY_TOKEN`, credenciales de WhatsApp ni números permitidos. Los secretos deben vivir únicamente en Railway Variables y las credenciales/estado persistente en el volumen `/data`.
+No guardes en GitHub `QWEN_API_KEY`, `NVIDIA_API_KEY`, `OPENCLAW_GATEWAY_TOKEN`, credenciales de WhatsApp ni números permitidos. Los secretos deben vivir únicamente en Railway Variables y las credenciales/estado persistente en el volumen `/data`.
