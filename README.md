@@ -18,7 +18,7 @@ Backend en **FastAPI** para Royal Shield y un servicio separado de **OpenClaw Ga
 - `TEMPERATURE` (default: `0.7`).
 - `PORT` (Railway la puede definir; fallback `8080`).
 
-## OpenClaw Gateway + WhatsApp
+## OpenClaw Gateway + WhatsApp + Telegram
 
 El directorio `gateway/` se despliega como un **segundo servicio** en Railway, usando `/gateway` como Root Directory y un volumen persistente montado en `/data`.
 
@@ -41,6 +41,7 @@ Configura el servicio `gateway` así:
 4. **Variables secretas:**
    - `NVIDIA_API_KEY`
    - `OPENCLAW_GATEWAY_TOKEN`
+   - `TELEGRAM_BOT_TOKEN` (token creado con `@BotFather`)
 5. Railway debe exponer `RAILWAY_PUBLIC_DOMAIN` después de habilitar un dominio público.
 6. Variables recomendadas:
    - `OPENCLAW_GATEWAY_PORT=8080`
@@ -75,6 +76,19 @@ openclaw channels login --channel whatsapp
 
 Escanea el QR desde **WhatsApp > Settings > Linked Devices > Link a Device**.
 
+### Telegram
+
+Telegram viene incluido en `openclaw@2026.7.1-2`; no necesita un paquete adicional. El gateway lee el token desde la variable secreta `TELEGRAM_BOT_TOKEN` de Railway. El token no se guarda en `openclaw.json` ni en Git.
+
+La configuración inicial permite mensajes directos mediante emparejamiento y mantiene los grupos desactivados. Después del deploy, envía un mensaje al bot y aprueba el código desde Railway Shell:
+
+```bash
+openclaw pairing list telegram
+openclaw pairing approve telegram <CODE>
+```
+
+Los códigos de emparejamiento vencen después de una hora. Telegram no usa `openclaw channels login`; basta con definir `TELEGRAM_BOT_TOKEN` y reiniciar el gateway.
+
 ### Verificación
 
 Desde Railway Shell:
@@ -95,4 +109,4 @@ uvicorn main:app --reload
 
 ## Seguridad
 
-No guardes en GitHub `NVIDIA_API_KEY`, `OPENCLAW_GATEWAY_TOKEN`, credenciales de WhatsApp ni números permitidos. Los secretos deben vivir únicamente en Railway Variables y las credenciales/estado persistente en el volumen `/data`.
+No guardes en GitHub `NVIDIA_API_KEY`, `OPENCLAW_GATEWAY_TOKEN`, `TELEGRAM_BOT_TOKEN`, credenciales de WhatsApp ni números permitidos. Los secretos deben vivir únicamente en Railway Variables y las credenciales/estado persistente en el volumen `/data`.
